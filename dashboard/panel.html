@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<head>
+	<meta charset="UTF-8">
+	<style>
+		@font-face {
+			font-family: "Metronic Pro";
+			src: url("font/MetronicPro.ttf");
+		}
+
+		p {
+			font-family: "Metronic Pro";
+			margin: 0;
+		}
+
+		#scoreLeft {
+			width: 30px;
+		}
+
+		#scoreRight {
+			width: 30px;
+		}
+
+		input {
+			margin-bottom: 10px;
+			width: 250px;
+			font-family: "Metronic Pro";
+			font-size: 20px;
+		}
+
+		select {
+			margin-bottom: 10px;
+			width: 250px;
+			font-family: "Metronic Pro";
+			font-size: 20px;
+		}
+
+		button {
+			font-family: "Metronic Pro";
+			font-size: 20px;
+			margin-bottom: 10px;
+		}
+	</style>
+</head>
+<body>
+	<p>IN GAME</p>
+	<input tabindex="1" id="playerLeft" type="text" autocomplete="off" oninput="updateModifiedColors()">
+	<button tabindex="-1" onclick="modifyIntegerValue('scoreLeft', -1)">-</button>
+	<input tabindex="3" id="scoreLeft" type="text" autocomplete="off" oninput="updateModifiedColors()">
+	<button tabindex="-1" onclick="modifyIntegerValue('scoreLeft', 1)">+</button>
+	<br>
+	<input tabindex="2" id="playerRight" type="text" autocomplete="off" oninput="updateModifiedColors()">
+	<button tabindex="-1" onclick="modifyIntegerValue('scoreRight', -1)">-</button>
+	<input tabindex="4" id="scoreRight" type="text" autocomplete="off" oninput="updateModifiedColors()">
+	<button tabindex="-1" onclick="modifyIntegerValue('scoreRight', 1)">+</button>
+	<br>
+	<button tabindex="-1" onclick="flipPlayers()">Flip Players</button>
+	<button tabindex="-1" onclick="resetPlayers()">Reset</button>
+	<br>
+	<input tabindex="5" id="round" type="text" autocomplete="off" oninput="updateModifiedColors()">
+	<br>
+	<input tabindex="6" id="bestOf" type="text" autocomplete="off" oninput="updateModifiedColors()">
+	<p>CASTERS</p>
+	<input tabindex="7" id="casterNameLeft" type="text" autocomplete="off" oninput="updateModifiedColors()" style="width:170px">
+	<input tabindex="9" id="casterNameRight" type="text" autocomplete="off" oninput="updateModifiedColors()" style="width:170px">
+	<br>
+	<input tabindex="8" id="casterHandleLeft" type="text" autocomplete="off" oninput="updateModifiedColors()" style="width:170px">
+	<input tabindex="10" id="casterHandleRight" type="text" autocomplete="off" oninput="updateModifiedColors()" style="width:170px">
+	<br>
+	<button tabindex="-1" onclick="flipCasters()">Flip Casters</button>
+
+	<script>
+		$(document).ready(function() {
+			nodecg.sendMessage("DairStateRequest")
+		})
+		var stateCache = {}
+		nodecg.listenFor("DairUpdate", (remoteState) => {
+			if (remoteState.socketId == undefined || remoteState.socketId !== nodecg.socket.id) {
+				for (key in remoteState) {
+					if (remoteState[key] !== undefined) {
+						var isModified = stateCache[key] !== undefined && $("#" + key).val() != stateCache[key]
+						stateCache[key] = remoteState[key]
+						if (!isModified) {
+							var element = $("#" + key)
+							if (element.is("input")) element.val(remoteState[key])
+							if (element.is("p")) element.text(remoteState[key])
+						}
+					}
+				}
+				updateModifiedColors()
+			}
+		})
+		function flipPlayers() {
+			nodecg.sendMessage("UpdateDairData", {
+				playerLeft: $("#playerRight").val(),
+				playerRight: $("#playerLeft").val(),
+				scoreLeft: $("#scoreRight").val(),
+				scoreRight: $("#scoreLeft").val()
+			})
+		}
+		function flipCasters() {
+			nodecg.sendMessage("UpdateDairData", {
+				casterNameLeft: $("#casterNameRight").val(),
+				casterNameRight: $("#casterNameLeft").val(),
+				casterHandleLeft: $("#casterHandleRight").val(),
+				casterHandleRight: $("#casterHandleLeft").val()
+			})
+		}
+		function resetPlayers() {
+			nodecg.sendMessage("UpdateDairData", {
+				playerLeft: "",
+				playerRight: "",
+				scoreLeft: 0,
+				scoreRight: 0
+			})
+		}
+		function modifyIntegerValue(id, diff) {
+			var modifiedValue = parseInt($('#' + id).val()) + diff
+			$('#' + id).val(modifiedValue)
+			nodecg.sendMessage("UpdateDairData", {[id]: modifiedValue})
+		}
+		function updateModifiedColors() {
+			$("input").each(function (index) {
+				var element = $(this)
+				if (element.attr("id").toLowerCase().includes("handle")) {
+					if (!element.val().startsWith("@")) {
+						element.val("@" + element.val())
+					}
+				}
+				var cacheValue = stateCache[element.attr("id")]
+				if (cacheValue !== undefined && cacheValue != element.val()) {
+					element.css("color", "deeppink")
+				} else {
+					element.css("color", "black")
+				}
+			})
+		}
+		function updateLevel() {
+			nodecg.sendMessage("UpdateDairData", {level: $("#level").val()})
+		}
+		function updateState() {
+			var update = {}
+			$("input").each(function (index) {
+				update[$(this).attr("id")] = $(this).val()
+				stateCache[$(this).attr("id")] = $(this).val()
+			})
+			nodecg.sendMessage("UpdateDairData", update)
+			updateModifiedColors()
+		}
+		$("input").on("keypress", function(e) {
+			if (e.which == 13) {
+				updateState()
+			}
+		})
+		document.onkeydown = function(evt) {
+			if (evt.key == "Escape") {
+				var focused = $(":focus")
+				focused.val(stateCache[focused.attr("id")])
+				updateModifiedColors()
+			}
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/175711/delaunay.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.13.2/TweenMax.min.js"></script>
+<head>
+	<meta charset="UTF-8">
+	<style>
+		@font-face {
+			font-family: "0Arame";
+			src: url("font/Arame.ttf");
+		}
+
+		p {
+			font-family: "0Arame";
+			color: white;
+			margin: 0;
+			font-size: 62px;
+			white-space: nowrap;
+			text-align: center;
+			-webkit-text-stroke: 1px black;
+			color: white;
+			text-shadow:
+			3px 3px 0 #000,
+			-1px -1px 0 #000,  
+			1px -1px 0 #000,
+			-1px 1px 0 #000,
+			1px 1px 0 #000;
+		}
+
+		body { 
+			margin: 0px auto; overflow: hidden;
+		}
+
+		#backgroundImage {
+			position: absolute;
+			left: 0;
+			top: 0;
+			z-index: -1;
+		}
+	</style>
+</head>
+<body>
+	<img src="img/casterbg.png" id="backgroundImage">
+
+	<div style="position: absolute; top: 822px; left: 247px; width: 560px; height: 65px; line-height: 65px;">
+		<p id="casterNameLeft">0</p>
+	</div>
+	<div style="position: absolute; top: 892px; left: 247px; width: 560px; height: 45px; line-height: 45px;">
+		<p id="casterHandleLeft" style="font-size: 35px;">0</p>
+	</div>
+	<div style="position: absolute; top: 822px; left: 1112px; width: 560px; height: 65px; line-height: 65px;">
+		<p id="casterNameRight">0</p>
+	</div>
+	<div style="position: absolute; top: 892px; left: 1112px; width: 560px; height: 45px; line-height: 45px;">
+		<p id="casterHandleRight" style="font-size: 35px;">0</p>
+	</div>
+
+	<script>
+		function printMousePos(event) {
+			console.log("clientX: " + event.clientX + " - clientY: " + event.clientY)
+		}
+
+		document.addEventListener("click", printMousePos);
+		var startingFontSizes = {}
+		function setText(target, text) {
+			var desiredWidth = $(target).parent().width();
+			var targetElement = $(target)
+			var resizer = $("#hidden-resizer")
+			var maxFontSize = startingFontSizes[target]
+			if (maxFontSize === undefined) {
+				maxFontSize = targetElement.css("font-size")
+				startingFontSizes[target] = maxFontSize
+			}
+			resizer.html(text)
+			resizer.css("font-size", maxFontSize)
+			resizer.css("font-family", targetElement.css("font-family"))
+
+			var size = 0
+			while(resizer.width() > desiredWidth) {
+				size = parseInt(resizer.css("font-size"), 10);
+				resizer.css("font-size", size - 1);
+			}
+			size = parseInt(resizer.css("font-size"), 10);
+			resizer.css("font-size", size - 1);
+			targetElement.css("font-size", size).html(resizer.html());
+		}
+		function getTextSize(text, fontSize) {
+			var resizer = $("#hidden-resizer");
+			resizer.html(text);
+			resizer.css("font-size", fontSize);
+			return resizer.width()
+		}
+		$(document).ready(function () {
+			$('<div />', {id: 'hidden-resizer'}).hide().appendTo(document.body);
+			nodecg.sendMessage("DairStateRequest")
+			$("div, img").each(function (index) {
+				var old = $(this).css("top")
+				$(this).css("top", parseInt(old, 10) + 300 + "px")
+				$(this).delay(500).animate({ top: old }, 1000)
+			})
+		})
+		nodecg.listenFor("DairUpdate", (remoteState) => {
+			if (remoteState.socketId == undefined || remoteState.socketId !== nodecg.socket.id) {
+				for (key in remoteState) {
+					if (remoteState[key] !== undefined) {
+						var element = $("#" + key)
+						if (element.is("input")) element.val(remoteState[key])
+						if (element.is("p")) setText("#" + key, remoteState[key])//element.text(remoteState[key])
+					}
+				}
+			}
+		})
+	</script>
+</body>
+</html>

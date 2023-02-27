@@ -1,0 +1,53 @@
+{
+  "name": "dair",
+  "version": "0.0.0",
+  "description": "",
+  "homepage": "",
+  "author": {
+    "name": "Fzzy",
+    "email": "fzzysoda@gmail.com",
+    "url": ""
+  },
+  "files": [
+    "dashboard",
+    "graphics",
+    "extension.js",
+    "extension"
+  ],
+  "keywords": [
+    "",
+    "nodecg-bundle"
+  ],
+  "nodecg": {
+    "compatibleRange": "^1.1.1",
+    "dashboardPanels": [
+      {
+        "name": "dairpanel",
+        "title": "Dair",
+        "width": 3,
+        "file": "panel.html",
+        "headerColor": "#525F78"
+      }
+    ],
+    "graphics": [
+      {
+        "file": "gameplay.html",
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "file": "casters.html",
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "file": "2shot.html",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+
+  },
+  "repository": "https://github.com/nodecg/nodecg.git",
+  "license": "Apache-2.0"
+}
